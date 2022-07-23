@@ -1,0 +1,63 @@
+version: '3.7'
+services:
+  redis:
+    image: redis:${REDIS_VERSION:-latest}
+    ports:
+      - ${REDIS_PORT}:6379
+    # Uncomment this line to use custom redis configuration
+    # volumes:
+    #    - ./conf:/usr/local/etc/redis
+    networks:
+      - host
+    deploy:
+      mode: global
+      replicas: 3 
+      labels:
+        - redis
+        - redis-master
+    restart_policy:
+      condition: on-failure
+      delay: 5s
+      max_attempts: 5
+      window: 10s
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://${SYSLOG_IP}:${SYSLOG_PORT}
+
+  redis-slave:
+    image: redis:${REDIS_VERSION:-latest}
+    ports:
+      - ${SLAVE_PORT}:6379
+    # Uncomment this line to use custom redis configuration
+    # volumes:
+    #     - ./conf:/usr/local/etc/redis
+    networks:
+      - host
+    deploy:
+      mode: global
+      replicas: 3 
+      labels:
+        - redis
+        - redis-slave
+    restart_policy:
+      condition: on-failure
+      delay: 5s
+      max_attempts: 5
+      window: 10s
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://${SYSLOG_IP}:${SYSLOG_PORT}
